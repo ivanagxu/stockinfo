@@ -18,6 +18,7 @@ import com.futu.openapi.pb.GetGlobalState;
 import com.futu.openapi.pb.QotCommon;
 import com.futu.openapi.pb.QotCommon.BasicQot;
 import com.futu.openapi.pb.QotCommon.KLine;
+import com.futu.openapi.pb.QotCommon.Security;
 import com.futu.openapi.pb.QotGetBasicQot;
 import com.futu.openapi.pb.QotRequestHistoryKL;
 import com.futu.openapi.pb.QotSub;
@@ -69,6 +70,7 @@ public class MyFutuUtil implements FTSPI_Qot, FTSPI_Trd, FTSPI_Conn {
 	
 	public static final String apiHost = "127.0.0.1";
 	public static final short apiPort = 11111;
+	public static final int max_sub_basic_qot_num = 10;
 	
 	private static boolean tradeUnlocked = false;
 	
@@ -112,30 +114,34 @@ public class MyFutuUtil implements FTSPI_Qot, FTSPI_Trd, FTSPI_Conn {
 			return;
 		
 		//初始化订阅
-		initSubscribe();
+		//initSubscribe();
 	}
 	
 	public void initSubscribe() {
-		subscribedCodes.put("00700", 1);
-		subscribedCodes.put("00388", 1);
-		
-		QotCommon.Security sec1 = QotCommon.Security.newBuilder().setCode("00700")
-                .setMarket(QotCommon.QotMarket.QotMarket_HK_Security_VALUE)
-                .build();
-        QotCommon.Security sec2 = QotCommon.Security.newBuilder().setCode("00388")
-                .setMarket(QotCommon.QotMarket.QotMarket_HK_Security_VALUE)
-                .build();
-        QotSub.C2S c2s = QotSub.C2S.newBuilder().addSecurityList(sec1)
-                .addSecurityList(sec2)
-                .addSubTypeList(QotCommon.SubType.SubType_RT_VALUE)
-                .addSubTypeList(QotCommon.SubType.SubType_KL_Day_VALUE)
-                .addSubTypeList(QotCommon.SubType.SubType_Basic_VALUE)
-                .setIsSubOrUnSub(true)
-                .setIsRegOrUnRegPush(true)
-                .setIsFirstPush(true)
-                .build();
-        QotSub.Request req = QotSub.Request.newBuilder().setC2S(c2s).build();
-        qot.sub(req);
+		List<SubBasicQot> existingSubs = futuService.listSubBasicQotAll();
+		if (existingSubs != null && !existingSubs.isEmpty()) {
+			List<Security> secList = new ArrayList<Security >();
+			for (SubBasicQot sb : existingSubs) {
+				subscribedCodes.put(sb.getCode(), sb.getMarket());
+				secList.add(QotCommon.Security.newBuilder().setCode(sb.getCode())
+						.setMarket(sb.getMarket())
+						.build());
+
+				if(secList.size() >= max_sub_basic_qot_num)
+					break;
+			}
+			QotSub.C2S c2s = QotSub.C2S.newBuilder().addAllSecurityList(secList)
+			.addAllSecurityList(secList)
+			.addSubTypeList(QotCommon.SubType.SubType_RT_VALUE)
+			.addSubTypeList(QotCommon.SubType.SubType_KL_Day_VALUE)
+			.addSubTypeList(QotCommon.SubType.SubType_Basic_VALUE)
+			.setIsSubOrUnSub(true)
+			.setIsRegOrUnRegPush(true)
+			.setIsFirstPush(true)
+			.build();
+        	QotSub.Request req = QotSub.Request.newBuilder().setC2S(c2s).build();
+        	qot.sub(req);
+		}
 	}
 
 	// 断线后会调用此回调
@@ -426,7 +432,7 @@ public class MyFutuUtil implements FTSPI_Qot, FTSPI_Trd, FTSPI_Conn {
 	//测试获取基本行情，需要先订阅才能获取
     public void getBasicQot(int market, String code) {
         Integer subscribedCodeMarket = subscribedCodes.get(code);
-        if(subscribedCodeMarket == null) {
+        if(subscribedCodeMarket == null && subscribedCodes.keySet().size() < max_sub_basic_qot_num) {
         	subscribedCodes.put(code, market);
     		
     		QotCommon.Security sec1 = QotCommon.Security.newBuilder().setCode(code)

@@ -6,9 +6,11 @@ import java.util.Date;
 import java.util.List;
 import java.util.TimeZone;
 
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import org.springframework.scheduling.annotation.Scheduled;
 
 import com.futu.openapi.FTAPI;
 import com.ivan.mfutu.entity.Category;
@@ -21,7 +23,7 @@ import com.ivan.mfutu.service.FutuService;
 import com.ivan.mfutu.util.MyFutuUtil;
 
 @Service
-public class FutuServiceImpl implements FutuService{
+public class FutuServiceImpl implements FutuService, InitializingBean{
 
 	@Autowired 
 	FutuDataMapper futuDataMapper;
@@ -144,6 +146,36 @@ public class FutuServiceImpl implements FutuService{
 		} else {
 			subBasicQotMapper.update(data);
 			System.out.println("Updated SubBasicQot: " + data);
+		}
+	}
+
+	@Override
+	public void afterPropertiesSet() throws Exception {
+		//初始化订阅全量股票基本行情（top N）
+		futuUtil.initSubscribe();
+	}
+
+	/**
+	 * 定时任务：定时全量查询订阅的股票基本行情并更新数据库。
+	 * 可通过配置项调整间隔：`futu.subscribed.update.fixedDelay`（毫秒），
+	 * 和初始延迟：`futu.subscribed.update.initialDelay`（毫秒）。
+	 */
+	@Scheduled(fixedDelayString = "${futu.subscribed.update.fixedDelay:60000}", initialDelayString = "${futu.subscribed.update.initialDelay:5000}")
+	public void scheduledUpdateSubscribedBasicQot() {
+		List<SubBasicQot> subs = listSubBasicQotAll();
+		if (subs == null || subs.isEmpty()) {
+			return;
+		}
+		for (SubBasicQot sb : subs) {
+			try {
+				if (sb != null && sb.getCode() != null) {
+					futuUtil.getBasicQot(sb.getMarket(), sb.getCode());
+					// 小延迟，避免短时间内大量请求压垮本地api
+					Thread.sleep(50);
+				}
+			} catch (Throwable t) {
+				t.printStackTrace();
+			}
 		}
 	}
 }
