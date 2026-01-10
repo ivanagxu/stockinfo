@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/header :: header}" />
+<head>
+	<style>
+		.qot-container {
+			margin: 20px 0;
+		}
+		.qot-table {
+			width: 100%;
+			border-collapse: collapse;
+		}
+		.qot-table th {
+			background-color: #878b87;
+			color: white;
+			padding: 12px;
+			text-align: left;
+			font-weight: bold;
+		}
+		.qot-table td {
+			border: 1px solid #ddd;
+			padding: 10px;
+		}
+		.qot-table tr:nth-child(even) {
+			background-color: #f2f2f2;
+		}
+		.qot-table tr:hover {
+			background-color: #e8e8e8;
+		}
+		.price-up {
+			color: red;
+			font-weight: bold;
+		}
+		.price-down {
+			color: green;
+			font-weight: bold;
+		}
+		.price-neutral {
+			color: black;
+		}
+		.refresh-info {
+			font-size: 12px;
+			color: #666;
+			margin-top: 10px;
+		}
+	</style>
+</head>
+<body>
+	<h1>Real-time Basic Quote (实时基本行情)</h1>
+	<div class="qot-container">
+		<div class="refresh-info">
+			Last updated: <span id="lastUpdate">--:--:--</span>
+			<br/>Auto-refresh every 5 seconds
+		</div>
+		<table class="qot-table" id="qotTable">
+			<thead>
+				<tr>
+					<th>代码</th>
+					<th>名称</th>
+					<th>市场</th>
+					<th>当前价</th>
+					<th>昨收价</th>
+					<th>涨跌幅 (%)</th>
+					<th>更新时间</th>
+				</tr>
+			</thead>
+			<tbody id="qotBody">
+				<tr>
+					<td colspan="7" style="text-align: center; padding: 20px;">Loading...</td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+
+	<div th:replace="~{fragments/footer :: copy}"></div>
+
+	<script type="text/javascript">
+		function formatDate(date) {
+			var h = date.getHours();
+			var m = date.getMinutes();
+			var s = date.getSeconds();
+			return (h < 10 ? '0' + h : h) + ':' + (m < 10 ? '0' + m : m) + ':' + (s < 10 ? '0' + s : s);
+		}
+
+		function getMarketName(marketCode) {
+			switch(marketCode) {
+				case 1:
+					return '港股';
+				case 2:
+					return '美股';
+				case 3:
+					return 'A股';
+				default:
+					return 'N/A';
+			}
+		}
+
+		function getRelativeTime(dateString) {
+			if (!dateString) return 'N/A';
+			
+			// Parse ISO 8601 format: "2026-01-10T22:10:58.000+00:00"
+			// The timestamp is stored as UTC+0 but represents UTC+8 time
+			var updateDate = new Date(dateString);
+			if (isNaN(updateDate.getTime())) {
+				return 'N/A';
+			}
+			
+			// The dateString has +00:00 offset, meaning JavaScript parses it as UTC time
+			// But the actual time is in +8 timezone, so we need to adjust by 8 hours
+			// +8 timezone is 8 hours ahead of UTC, so we subtract 8 hours from the parsed UTC time
+			var adjustedDate = new Date(updateDate.getTime() - 8 * 60 * 60 * 1000);
+			
+			var now = new Date();
+			var secondsDiff = Math.floor((now - adjustedDate) / 1000);
+			
+			if (secondsDiff < 0) return '刚刚';
+			if (secondsDiff < 60) return secondsDiff + '秒前';
+			if (secondsDiff < 3600) return Math.floor(secondsDiff / 60) + '分钟前';
+			if (secondsDiff < 86400) return Math.floor(secondsDiff / 3600) + '小时前';
+			return Math.floor(secondsDiff / 86400) + '天前';
+		}
+
+		function loadSubBasicQot() {
+			$.ajax({
+				url: '/subBasicQot/api/list',
+				type: 'GET',
+				dataType: 'json',
+				success: function(data) {
+					updateTable(data);
+					$('#lastUpdate').text(formatDate(new Date()));
+				},
+				error: function(err) {
+					console.error('Failed to load data:', err);
+					$('#qotBody').html('<tr><td colspan="7" style="text-align: center; color: red;">Failed to load data</td></tr>');
+				}
+			});
+		}
+
+		function updateTable(data) {
+			var html = '';
+			if (!data || data.length === 0) {
+				html = '<tr><td colspan="7" style="text-align: center;">No data available</td></tr>';
+			} else {
+				data.forEach(function(item) {
+					var incRate = item.increaseRate || 0;
+					var rateClass = incRate > 0 ? 'price-up' : (incRate < 0 ? 'price-down' : 'price-neutral');
+				var rateDisplay = (incRate >= 0 ? '+' : '') + (incRate).toFixed(2) + '%';
+				var relativeTime = getRelativeTime(item.updateTime);
+				
+				html += '<tr>';
+				html += '<td>' + (item.code || 'N/A') + '</td>';
+				html += '<td>' + (item.name || 'N/A') + '</td>';
+				html += '<td>' + (item.market || 'N/A') + '</td>';
+				html += '<td>' + (item.curPrice || '0.00').toFixed(2) + '</td>';
+				html += '<td>' + (item.lastClosePrice || '0.00').toFixed(2) + '</td>';
+				html += '<td class="' + rateClass + '">' + rateDisplay + '</td>';
+				html += '<td>' + relativeTime + '</td>';
+					html += '</tr>';
+				});
+			}
+			$('#qotBody').html(html);
+		}
+
+		// Load data on page load
+		$(document).ready(function() {
+			loadSubBasicQot();
+			// Refresh every 5 seconds
+			setInterval(loadSubBasicQot, 5000);
+		});
+	</script>
+</body>
+</html>

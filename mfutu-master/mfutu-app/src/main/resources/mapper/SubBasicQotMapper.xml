@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ivan.mfutu.mapper.SubBasicQotMapper">
+
+    <select id="get" resultMap="com.ivan.mfutu.mapper.ResultMapper.SubBasicQotResultMap">
+        select code, market, name, cur_price, last_close_price, increase_rate, update_time from sub_basic_qot where code = #{code}
+    </select>
+
+    <select id="listAll" resultMap="com.ivan.mfutu.mapper.ResultMapper.SubBasicQotResultMap">
+        select code, market, name, cur_price, last_close_price, increase_rate, update_time from sub_basic_qot
+    </select>
+
+    <insert id="insert">
+        insert into sub_basic_qot(code,market,name,cur_price,last_close_price,increase_rate,update_time)
+        values(#{code},#{market},#{name},#{curPrice},#{lastClosePrice},#{increaseRate},NOW())
+    </insert>
+
+    <update id="update">
+        update sub_basic_qot
+        set market = #{market}, name = #{name}, cur_price = #{curPrice}, last_close_price = #{lastClosePrice}, increase_rate = #{increaseRate}, update_time = NOW()
+        where code = #{code}
+    </update>
+
+    <delete id="delete">
+        delete from sub_basic_qot where code = #{code}
+    </delete>
+
+    <delete id="deleteAll">
+        delete from sub_basic_qot where 0 = 0
+    </delete>
+
+</mapper>

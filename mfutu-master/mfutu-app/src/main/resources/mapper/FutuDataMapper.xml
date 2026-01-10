@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ivan.mfutu.mapper.FutuDataMapper">
+
+	<select id="get"
+		resultMap="com.ivan.mfutu.mapper.ResultMapper.FutuDataResultMap">
+		select a.id as id, a.code as code, a.name as name, b.market as market,
+		b.level as level, b.currency as
+		currency,price,my_avg_price,quantity,convert(value / (select
+		sum(f.value) from futu_data f where f.pl_date = a.pl_date),
+		decimal(4,4)) * 100 as percentage, b.industry as
+		industry,b.sub_industry as
+		sub_industry,tags,update_time,value,pl_value,convert(pl_ratio, decimal(4,4)) * 100 as pl_ratio,pl_date from
+		futu_data a left join category b on a.code=b.code where id = #{id}
+	</select>
+
+	<select id="getByPlDate"
+		resultMap="com.ivan.mfutu.mapper.ResultMapper.FutuDataResultMap">
+		select a.id as id, a.code as code, a.name as name, b.market as market,
+		b.level as level, b.currency as
+		currency,price,my_avg_price,quantity,convert(value / (select
+		sum(f.value) from futu_data f where f.pl_date = a.pl_date),
+		decimal(4,4)) * 100 as percentage, b.industry as
+		industry,b.sub_industry as
+		sub_industry,tags,update_time,value,pl_value,convert(pl_ratio, decimal(4,4)) * 100 as pl_ratio,pl_date from
+		futu_data a left join category b on a.code=b.code where pl_date =
+		#{plDate} order by percentage desc
+	</select>
+
+	<select id="getPlDateList" resultType="java.lang.String">
+		select distinct pl_date from futu_data
+	</select>
+
+	<select id="getDistinctCategory"
+		resultMap="com.ivan.mfutu.mapper.ResultMapper.CategoryResultMap">
+		select distinct code,name from futu_data;
+	</select>
+
+	<insert id="insert">
+		insert into
+		futu_data(code,name,price,my_avg_price,quantity,percentage,tags,update_time,value,pl_value,pl_ratio,pl_date)
+		values
+		(#{code},#{name},#{price},#{myAvgPrice},#{quantity},#{percentage},#{tags},NOW(),#{value},#{plValue},#{plRatio},#{plDate})
+	</insert>
+
+	<delete id="deleteAll">
+		delete from futu_data where 0 = 0
+	</delete>
+
+	<delete id="deleteByDate">
+		delete from futu_data where pl_date = #{plDate}
+	</delete>
+</mapper>

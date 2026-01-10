@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/header :: header}" />
+<body>
+	<h1 th:text="'Data Management at ' + ${plDate}">Data Management</h1>
+	<div>
+		<table border="1">
+			<tr>
+				<th>CODE</th>
+				<th>NAME</th>
+				<th>MARKET</th>
+				<th>MARKET VALUE</th>
+				<th>CURRENCY</th>
+				<th>INDUSTRY</th>
+				<th>SUB INDUSTRY</th>
+			</tr>
+			<tr th:each="category : ${data.categories}" class="dataRow">
+				<td th:text="${category.code}">N/A</td>
+				<td th:text="${category.name}">N/A</td>
+				<td>
+					<select name="market">
+						<option value="" th:selected="${category.market==''}">please select</option>
+						<option value="US" th:selected="${category.market=='US'}">US</option>
+						<option value="HK" th:selected="${category.market=='HK'}">HK</option>
+						<option value="CN" th:selected="${category.market=='CN'}">CN</option>
+					</select>
+				</td>
+				<td>
+					<select name="level">
+						<option value="" th:selected="${category.level==''}">please select</option>
+						<option value="High" th:selected="${category.level=='High'}">High (>1000)</option>
+						<option value="Medium" th:selected="${category.level=='Medium'}">Medium (100-1000)</option>
+						<option value="Low" th:selected="${category.level=='Low'}">Low (<100)</option>
+					</select>
+				</td>
+				<td>
+					<select name="currency">
+						<option value="" th:selected="${category.currency==''}">please select</option>
+						<option value="USD" th:selected="${category.currency=='USD'}">USD</option>
+						<option value="HKD" th:selected="${category.currency=='HKD'}">HKD</option>
+						<option value="CNY" th:selected="${category.currency=='CNY'}">CNY</option>
+					</select>
+				</td>
+				<td>
+					<select name="industry">
+						<option value="" th:selected="${category.industry==''}">please select</option>
+						<option value="Education" th:selected="${category.industry=='Education'}">Education</option>
+						<option value="Medical" th:selected="${category.industry=='Medical'}">Medical</option>
+						<option value="Gold" th:selected="${category.industry=='Gold'}">Gold</option>
+						<option value="Resource" th:selected="${category.industry=='Resource'}">Resource</option>
+						<option value="Game" th:selected="${category.industry=='Game'}">Game</option>
+						<option value="Flight" th:selected="${category.industry=='Flight'}">Flight</option>
+						<option value="Energy" th:selected="${category.industry=='Energy'}">Energy</option>
+						<option value="High Tech" th:selected="${category.industry=='High Tech'}">High Tech</option>
+						<option value="Manufacturing" th:selected="${category.industry=='Manufacturing'}">Manufacturing</option>
+						<option value="Commercial" th:selected="${category.industry=='Commercial'}">Commercial</option>
+						<option value="Vocation" th:selected="${category.industry=='Vocation'}">Vocation</option>
+						<option value="Internet" th:selected="${category.industry=='Internet'}">Internet</option>
+						<option value="Financial" th:selected="${category.industry=='Financial'}">Financial</option>
+					</select>
+				</td>
+				<td>
+					<select name="subIndustry">
+						<option value="" th:selected="${category.subIndustry==''}">please select</option>
+						<option value="Leading" th:selected="${category.subIndustry=='Leading'}">Leading</option>
+						<option value="Catching up" th:selected="${category.subIndustry=='Catching up'}">Catching up</option>
+						<option value="Losing" th:selected="${category.subIndustry=='Losing'}">Losing</option>
+					</select>
+				</td>
+			</tr>
+			<tr>
+				<td colspan="7" align="right">
+					<input type="button" value="Submit" onclick="checkData()"/>
+				</td>
+			</tr>
+		</table>
+	</div>
+	<div th:replace="~{fragments/footer :: copy}"></div>
+	<script type="text/javascript">
+		function checkData() {
+			var jsonData = [];
+			$('.dataRow').each(function() {
+				var data = {};
+				data.code = $(this).children('td:eq(0)').text();
+				data.name = $(this).children('td:eq(1)').text();
+				data.market = $(this).find("select[name='market']").val();
+				data.level = $(this).find("select[name='level']").val();
+				data.currency = $(this).find("select[name='currency']").val();
+				data.industry = $(this).find("select[name='industry']").val();
+				data.subIndustry = $(this).find("select[name='subIndustry']").val();
+				jsonData.push(data);
+			});
+			submitAsJson('updateCategory', 'POST', jsonData, function(result){
+				windows.location.href='manage';
+			});
+		}
+	</script>
+</body>
+</html>

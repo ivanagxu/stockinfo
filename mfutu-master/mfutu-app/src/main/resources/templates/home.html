@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/header :: header}" />
+<body>
+	<h1 th:text="'Data Management at ' + ${plDate}">Data Management</h1>
+	<div>
+		<table border="1">
+			<tr>
+				<th>ID</th>
+				<th>CODE</th>
+				<th>NAME</th>
+				<th>MARKET</th>
+				<th>MARKET VALUE</th>
+				<th>CURRENCY</th>
+				<th>INDUSTRY</th>
+				<th>SUB INDUSTRY</th>
+				<th>PRICE</th>
+				<th>MY AVG PRICE</th>
+				<th>QUANTITY</th>
+				<th>PERCENTAGE</th>
+				<th>TAGS</th>
+				<th>VALUE</th>
+				<th>PL VALUE</th>
+				<th>PL RATIO</th>
+				<th>PL DATE</th>
+				<th>UPDATE TIME</th>
+			</tr>
+			<tr th:each="futuData : ${data.futuDatas}" class="dataRow">
+				<td th:text="${futuData.id}">N/A</td>
+				<td th:text="${futuData.code}">N/A</td>
+				<td th:text="${futuData.name}">N/A</td>
+				<td th:text="${futuData.market}">N/A</td>
+				<td th:text="${futuData.level}">N/A</td>
+				<td th:text="${futuData.currency}">N/A</td>
+				<td th:text="${futuData.industry}">N/A</td>
+				<td th:text="${futuData.subIndustry}">N/A</td>
+				<td th:text="${futuData.price}">N/A</td>
+				<td th:text="${futuData.myAvgPrice}">N/A</td>
+				<td th:text="${futuData.quantity}">N/A</td>
+				<td th:text="${futuData.percentage}">N/A</td>
+				<td th:text="${futuData.tags}">N/A</td>
+				<td th:text="${futuData.value}">N/A</td>
+				<td th:text="${futuData.plValue}">N/A</td>
+				<td th:text="${futuData.plRatio}">N/A</td>
+				<td th:text="${futuData.plDate}">N/A</td>
+				<td th:text="${futuData.updateTime}">N/A</td>
+			</tr>
+			<tr>
+				<td colspan="18" align="right">
+					<input type="button" value="Refresh" onclick="checkData()"/>
+				</td>
+			</tr>
+		</table>
+	</div>
+	<div th:replace="~{fragments/footer :: copy}"></div>
+	<script type="text/javascript">
+		function checkData() {
+			location.href = 'home';
+		}
+	</script>
+</body>
+</html>

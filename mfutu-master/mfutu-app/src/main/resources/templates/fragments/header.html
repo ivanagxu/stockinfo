@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:fragment="header">
+	<meta charset="UTF-8">
+	<title>Futu Data Management</title>
+	<link rel="stylesheet" href="/webjars/jquery-ui/1.12.1/jquery-ui.css" />
+	<script type="text/javascript" src="/webjars/jquery/3.3.1-1/jquery.js"></script>
+	<script type="text/javascript"
+		src="/webjars/jquery-ui/1.12.1/jquery-ui.js"></script>
+	<script type="text/javascript">
+		function submitAsJson(url, method, data, callback) {
+	        $.ajax({
+	            type: method,
+	            dataType: "json",
+	            url: url,
+	            contentType: "application/json",
+	            data:JSON.stringify(data),
+	            success: callback,
+	            failure: function (result) {
+	            	alert('submit failed, url=' + url);	
+	            }
+	        });
+	    }
+	</script>
+</head>
+<body></body>
+</html>

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ivan.mfutu.mapper.ResultMapper">   
+    <resultMap id="FutuDataResultMap" type="com.ivan.mfutu.entity.FutuData">
+	    <result column="id" jdbcType="INTEGER" property="id" />
+	    <result column="code" jdbcType="VARCHAR" property="code" />
+	    <result column="name" jdbcType="VARCHAR" property="name" />
+	    <result column="market" jdbcType="VARCHAR" property="market" />
+	    <result column="level" jdbcType="VARCHAR" property="level" />
+	    <result column="currency" jdbcType="VARCHAR" property="currency" />
+	    <result column="price" jdbcType="FLOAT" property="price" />
+	    <result column="my_avg_price" jdbcType="FLOAT" property="myAvgPrice" />
+	    <result column="quantity" jdbcType="INTEGER" property="quantity" />
+	    <result column="percentage" jdbcType="FLOAT" property="percentage" />
+	    <result column="industry" jdbcType="VARCHAR" property="industry" />
+	    <result column="sub_industry" jdbcType="VARCHAR" property="subIndustry" />
+	    <result column="tags" jdbcType="VARCHAR" property="tags" />
+	    <result column="value" jdbcType="FLOAT" property="value" />
+	    <result column="pl_value" jdbcType="TIMESTAMP" property="plValue" />
+	    <result column="pl_ratio" jdbcType="TIMESTAMP" property="plRatio" />
+	    <result column="pl_date" jdbcType="VARCHAR" property="plDate" />
+	    <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
+    </resultMap>
+    <resultMap id="CategoryResultMap" type="com.ivan.mfutu.entity.Category">
+        <result column="code" jdbcType="VARCHAR" property="code" />
+        <result column="name" jdbcType="VARCHAR" property="name" />
+        <result column="industry" jdbcType="VARCHAR" property="industry" />
+        <result column="sub_industry" jdbcType="VARCHAR" property="subIndustry" />
+        <result column="market" jdbcType="VARCHAR" property="market" />
+        <result column="level" jdbcType="VARCHAR" property="level" />
+        <result column="currency" jdbcType="VARCHAR" property="currency" />
+    </resultMap>
+	<resultMap id="SubBasicQotResultMap" type="com.ivan.mfutu.entity.SubBasicQot">
+		<result column="code" jdbcType="VARCHAR" property="code" />
+		<result column="market" jdbcType="INTEGER" property="market" />
+		<result column="name" jdbcType="VARCHAR" property="name" />
+		<result column="cur_price" jdbcType="FLOAT" property="curPrice" />
+		<result column="last_close_price" jdbcType="FLOAT" property="lastClosePrice" />
+		<result column="increase_rate" jdbcType="FLOAT" property="increaseRate" />
+		<result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
+	</resultMap>
+</mapper>
