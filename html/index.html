@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width,initial-scale=1">
+	<meta name="format-detection" content="telephone=no">
+	<title>股票信息</title>
+	<style>
+		html,body{height:100%;margin:0;padding:0;-webkit-text-size-adjust:100%;}
+		body{font-family:system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; background:#fff;color:#111;display:flex;align-items:flex-start;justify-content:center;padding:12px;}
+		.container{width:100%;max-width:800px}
+		header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+		header h1{font-size:1.4rem;margin:0}
+		header .controls{display:flex;gap:8px;align-items:center}
+		button{font-size:1rem;padding:8px 12px;border-radius:6px;border:1px solid #ccc;background:#f7f7f7}
+		.updated{font-size:0.9rem;color:#666}
+		ul.stock-list{list-style:none;padding:0;margin:0;border-top:1px solid #eee}
+		li.stock{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:8px;padding:12px 8px;border-bottom:1px solid #f0f0f0;align-items:center}
+		.name{font-size:1.2rem;font-weight:600}
+		.code{font-size:1rem;color:#666}
+		.price{font-size:1.2rem;text-align:right}
+		.change{font-size:1.1rem;text-align:right}
+		.up{color:#c70000} /* 红色表示上涨 */
+		.down{color:#008000} /* 绿色表示下跌 */
+		@media (max-width:480px){
+			li.stock{grid-template-columns:1fr 1fr;grid-auto-rows:auto}
+			.price,.change{justify-self:end}
+			.code{grid-column:1/3}
+		}
+	</style>
+</head>
+<body>
+	<div class="container">
+		<header>
+			<h1>股票信息</h1>
+			<div class="controls">
+				<div class="updated" id="lastUpdated">—</div>
+				<button id="refreshBtn">刷新</button>
+			</div>
+		</header>
+
+		<ul class="stock-list" id="stockList" aria-live="polite"></ul>
+	</div>
+
+	<script>
+		// 本地 JSON 数据源（后续替换为服务端接口返回）
+		const stocksData = [
+			{ name: "中国平安", code: "601318", price: 52.34, changePct: 0.85 },
+			{ name: "贵州茅台", code: "600519", price: 1986.50, changePct: -0.44 },
+			{ name: "招商银行", code: "600036", price: 34.12, changePct: 0.00 },
+			{ name: "京东集团", code: "JD", price: 44.23, changePct: 1.25 }
+		];
+
+		const REFRESH_INTERVAL_MS = 30000; // 定时刷新间隔（毫秒）
+
+		const stockListEl = document.getElementById('stockList');
+		const lastUpdatedEl = document.getElementById('lastUpdated');
+		const refreshBtn = document.getElementById('refreshBtn');
+
+		function formatChange(pct){
+			const sign = pct > 0 ? '+' : (pct < 0 ? '' : '');
+			return sign + pct.toFixed(2) + '%';
+		}
+
+		function renderStocks(data){
+			stockListEl.innerHTML = '';
+			data.forEach(s => {
+				const li = document.createElement('li');
+				li.className = 'stock';
+
+				const name = document.createElement('div');
+				name.className = 'name';
+				name.textContent = s.name;
+
+				const code = document.createElement('div');
+				code.className = 'code';
+				code.textContent = s.code;
+
+				const price = document.createElement('div');
+				price.className = 'price';
+				price.textContent = s.price.toFixed(2);
+
+				const change = document.createElement('div');
+				change.className = 'change';
+				change.textContent = formatChange(s.changePct);
+				if (s.changePct > 0) change.classList.add('up');
+				else if (s.changePct < 0) change.classList.add('down');
+
+				li.appendChild(name);
+				li.appendChild(code);
+				li.appendChild(price);
+				li.appendChild(change);
+
+				stockListEl.appendChild(li);
+			});
+			lastUpdatedEl.textContent = new Date().toLocaleTimeString();
+		}
+
+		// 模拟刷新：当前实现从本地变量读取，演示时会对价格做微调以产生颜色变化
+		function fetchStocksSimulated(){
+			// 深拷贝，避免直接修改原始数组（若你想保留原始数据，请改为直接使用）
+			const data = stocksData.map(s => ({...s}));
+			// 为演示随机波动（实际接入服务端时移除此逻辑）
+			data.forEach(s => {
+				const volatility = (Math.random() - 0.5) * 0.02; // +-1% 波动
+				const newPrice = s.price * (1 + volatility);
+				const changePct = ((newPrice - s.price) / s.price) * 100;
+				s.price = newPrice;
+				s.changePct = changePct;
+			});
+			return Promise.resolve(data);
+		}
+
+		async function refresh(){
+			try{
+				const data = await fetchStocksSimulated();
+				renderStocks(data);
+			}catch(err){
+				console.error('刷新失败', err);
+			}
+		}
+
+		refreshBtn.addEventListener('click', refresh);
+
+		// 首次渲染
+		renderStocks(stocksData);
+
+		// 定时刷新
+		setInterval(refresh, REFRESH_INTERVAL_MS);
+	</script>
+</body>
+</html>

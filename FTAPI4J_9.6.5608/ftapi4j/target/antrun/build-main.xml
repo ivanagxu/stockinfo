@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="maven-antrun-" default="main">
+  <target name="main">
+    <copy todir="C:\Users\admin\Documents\projects\stockinfo\stockinfo\FTAPI4J_9.6.5608\ftapi4j/../lib">
+      <fileset dir="C:\Users\admin\Documents\projects\stockinfo\stockinfo\FTAPI4J_9.6.5608\ftapi4j\target">
+        <include name="futu-api-9.6.5608.jar" />
+      </fileset>
+    </copy>
+  </target>
+</project>
