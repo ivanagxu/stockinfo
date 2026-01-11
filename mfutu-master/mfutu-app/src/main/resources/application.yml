@@ -1,3 +1,4 @@
+#java -jar target/mfutu-app-1.0.0-SNAPSHOT.jar --spring.config.location=classpath:/application-prod.yml
 spring:
   profiles:
     active: dev

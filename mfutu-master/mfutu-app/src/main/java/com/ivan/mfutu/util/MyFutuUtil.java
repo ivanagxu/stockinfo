@@ -68,8 +68,6 @@ public class MyFutuUtil implements FTSPI_Qot, FTSPI_Trd, FTSPI_Conn {
 	
 	public static final int SecurityFirm_FutuSecurities_VALUE = 1;
 	
-	public static final String apiHost = "127.0.0.1";
-	public static final short apiPort = 11111;
 	public static final int max_sub_basic_qot_num = 10;
 	
 	private static boolean tradeUnlocked = false;
@@ -103,7 +101,7 @@ public class MyFutuUtil implements FTSPI_Qot, FTSPI_Trd, FTSPI_Conn {
 		trd.setTrdSpi(this); // 设置交易回调
 	}
 
-	public void start() {
+	public void start(String apiHost, int apiPort) {
 		qot.initConnect(apiHost, apiPort, false);
 		trd.initConnect(apiHost, apiPort, false);
 	}
@@ -463,7 +461,7 @@ public class MyFutuUtil implements FTSPI_Qot, FTSPI_Trd, FTSPI_Conn {
 	public static void main(String[] args) throws InterruptedException {
 		FTAPI.init(); // 初始化环境，程序启动时调用1次
 		MyFutuUtil futuApp = new MyFutuUtil();
-		futuApp.start();
+		futuApp.start("127.0.0.1", 11111);
 		futuApp.getTradeAccList();
 		//futuApp.unlockTrade();
 		Thread.sleep(3000L);
