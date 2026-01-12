@@ -144,8 +144,14 @@ public class FutuServiceImpl implements FutuService, InitializingBean {
 			return;
 		}
 		SubBasicQot exist = subBasicQotMapper.get(data.getCode());
-		subBasicQotMapper.update(data);
-		System.out.println("Updated SubBasicQot: " + data);
+		if(exist == null) {
+			subBasicQotMapper.insert(data);
+			System.out.println("Inserted SubBasicQot: " + data);
+			return;
+		}else {
+			subBasicQotMapper.update(data);
+			System.out.println("Updated SubBasicQot: " + data);
+		}
 	}
 
 	@Override
@@ -160,7 +166,7 @@ public class FutuServiceImpl implements FutuService, InitializingBean {
 	 * 可通过配置项调整间隔：`futu.subscribed.update.fixedDelay`（毫秒），
 	 * 和初始延迟：`futu.subscribed.update.initialDelay`（毫秒）。
 	 */
-	@Scheduled(fixedDelayString = "${futu.subscribed.update.fixedDelay:60000}", initialDelayString = "${futu.subscribed.update.initialDelay:5000}")
+	@Scheduled(fixedDelayString = "${futu.subscribed.update.fixedDelay:300000}", initialDelayString = "${futu.subscribed.update.initialDelay:5000}")
 	public void scheduledUpdateSubscribedBasicQot() {
 		List<SubBasicQot> subs = listSubBasicQotAll();
 		if (subs == null || subs.isEmpty()) {

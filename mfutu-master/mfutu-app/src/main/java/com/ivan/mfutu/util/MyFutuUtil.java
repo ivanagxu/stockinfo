@@ -68,7 +68,7 @@ public class MyFutuUtil implements FTSPI_Qot, FTSPI_Trd, FTSPI_Conn {
 	
 	public static final int SecurityFirm_FutuSecurities_VALUE = 1;
 	
-	public static final int max_sub_basic_qot_num = 10;
+	public static final int max_sub_basic_qot_num = 50;
 	
 	private static boolean tradeUnlocked = false;
 	
