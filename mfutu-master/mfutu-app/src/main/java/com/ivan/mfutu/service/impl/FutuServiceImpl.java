@@ -22,6 +22,7 @@ import com.ivan.mfutu.mapper.SubBasicQotMapper;
 import com.ivan.mfutu.entity.SubBasicQot;
 import com.ivan.mfutu.service.FutuService;
 import com.ivan.mfutu.util.MyFutuUtil;
+import com.ivan.mfutu.util.MyTwelvedataUtil;
 
 @Service
 public class FutuServiceImpl implements FutuService, InitializingBean {
@@ -42,6 +43,8 @@ public class FutuServiceImpl implements FutuService, InitializingBean {
 	private int apiPort;
 
 	private static MyFutuUtil futuUtil = null;
+	
+	private static MyTwelvedataUtil twelveDataUtil = null;
 
 	public FutuServiceImpl() {
 		if (futuUtil == null) {
@@ -49,7 +52,11 @@ public class FutuServiceImpl implements FutuService, InitializingBean {
 			futuUtil.setFutuService(this);
 			FTAPI.init(); // 初始化环境，程序启动时调用1次
 		}
-	}
+		if(twelveDataUtil == null) {
+			twelveDataUtil = new MyTwelvedataUtil();
+			twelveDataUtil.setFutuService(this);
+		}
+	}	
 
 	@Override
 	public void syncFutuData(int market) {
@@ -127,12 +134,24 @@ public class FutuServiceImpl implements FutuService, InitializingBean {
 
 	@Override
 	public void getBasicQot(int market, String code) {
-		futuUtil.getBasicQot(market, code);
+		if(market == 1) {
+			futuUtil.getBasicQot(market, code);	
+		}
+		else if(market == 2) {
+			twelveDataUtil.getBasicQot(market, code);
+		} else {
+			System.out.println("Unsupported market for basic quote: " + market);
+		}
 	}
 
 	@Override
 	public List<SubBasicQot> listSubBasicQotAll() {
 		return subBasicQotMapper.listAll();
+	}
+
+	@Override
+	public List<SubBasicQot> listSubBasicQotByMarket(int market) {
+		return subBasicQotMapper.listByMarket(market);
 	}
 
 	@Override
@@ -162,12 +181,12 @@ public class FutuServiceImpl implements FutuService, InitializingBean {
 	}
 
 	/**
-	 * 定时任务：定时全量查询订阅的股票基本行情并更新数据库。
+	 * 港股更新定时任务：定时全量查询订阅的股票基本行情并更新数据库。
 	 * 可通过配置项调整间隔：`futu.subscribed.update.fixedDelay`（毫秒），
 	 * 和初始延迟：`futu.subscribed.update.initialDelay`（毫秒）。
 	 */
 	@Scheduled(fixedDelayString = "${futu.subscribed.update.fixedDelay:300000}", initialDelayString = "${futu.subscribed.update.initialDelay:5000}")
-	public void scheduledUpdateSubscribedBasicQot() {
+	public void scheduledUpdateHKSubscribedBasicQot() {
 		List<SubBasicQot> subs = listSubBasicQotAll();
 		if (subs == null || subs.isEmpty()) {
 			return;
@@ -175,8 +194,34 @@ public class FutuServiceImpl implements FutuService, InitializingBean {
 		for (SubBasicQot sb : subs) {
 			try {
 				if (sb != null && sb.getCode() != null) {
-					futuUtil.getBasicQot(sb.getMarket(), sb.getCode());
-					// 小延迟，避免短时间内大量请求压垮本地api
+					if(sb.getMarket() == 1) {
+						futuUtil.getBasicQot(sb.getMarket(), sb.getCode());
+					} 
+					Thread.sleep(50);
+				}
+			} catch (Throwable t) {
+				t.printStackTrace();
+			}
+		}
+	}
+	
+	/**
+	 * 每股更新定时任务：定时全量查询订阅的股票基本行情并更新数据库。
+	 * 可通过配置项调整间隔：`futu.subscribed.update.fixedDelay`（毫秒），
+	 * 和初始延迟：`futu.subscribed.update.initialDelay`（毫秒）。
+	 */
+	@Scheduled(fixedDelayString = "${futu.subscribed.update.fixedDelay:3600000}", initialDelayString = "${futu.subscribed.update.initialDelay:5000}")
+	public void scheduledUpdateUSSubscribedBasicQot() {
+		List<SubBasicQot> subs = listSubBasicQotAll();
+		if (subs == null || subs.isEmpty()) {
+			return;
+		}
+		for (SubBasicQot sb : subs) {
+			try {
+				if (sb != null && sb.getCode() != null) {
+					if(sb.getMarket() == 2) {
+						twelveDataUtil.getBasicQot(sb.getMarket(), sb.getCode());
+					}
 					Thread.sleep(50);
 				}
 			} catch (Throwable t) {

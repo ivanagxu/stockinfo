@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
+import java.time.LocalTime;
 
 import org.springframework.ui.Model;
 
@@ -13,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.ivan.mfutu.entity.SubBasicQot;
@@ -30,8 +32,17 @@ public class SubBasicQotController {
      * @return view name
      */
     @GetMapping("")
-    public String view(Model model) {
-        List<SubBasicQot> raw = futuService.listSubBasicQotAll();
+    public String view(Model model,@RequestParam(required = false) Integer market) {
+    	if (market == null) {
+            // 根据当前时间决定market：白天查港股（market=1），夜间查美股（market=2）
+            LocalTime now = LocalTime.now();
+            if (now.isAfter(LocalTime.of(9, 0)) && now.isBefore(LocalTime.of(17, 0))) {
+                market = 1; // 港股
+            } else {
+                market = 2; // 美股
+            }
+        }
+    	List<SubBasicQot> raw = futuService.listSubBasicQotByMarket(market);
         List<Map<String, Object>> viewList = new ArrayList<>();
         Date now = new Date();
         if (raw != null) {
@@ -84,7 +95,16 @@ public class SubBasicQotController {
      */
     @GetMapping("/api/list")
     @ResponseBody
-    public List<SubBasicQot> listAll() {
-        return futuService.listSubBasicQotAll();
+    public List<SubBasicQot> listAll(@RequestParam(required = false) Integer market) {
+        if (market == null) {
+            // 根据当前时间决定market：白天查港股（market=1），夜间查美股（market=2）
+            LocalTime now = LocalTime.now();
+            if (now.isAfter(LocalTime.of(9, 0)) && now.isBefore(LocalTime.of(17, 0))) {
+                market = 1; // 港股
+            } else {
+                market = 2; // 美股
+            }
+        }
+        return futuService.listSubBasicQotByMarket(market);
     }
 }

@@ -10,6 +10,7 @@ import com.ivan.mfutu.entity.SubBasicQot;
 public interface SubBasicQotMapper {
     SubBasicQot get(String code);
     List<SubBasicQot> listAll();
+    List<SubBasicQot> listByMarket(int market);
     void insert(SubBasicQot data);
     int update(SubBasicQot data);
     void delete(String code);

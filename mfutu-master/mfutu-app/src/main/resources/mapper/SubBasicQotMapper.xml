@@ -10,6 +10,10 @@
         select code, market, name, cur_price, last_close_price, increase_rate, update_time from sub_basic_qot order by update_time desc
     </select>
 
+    <select id="listByMarket" resultMap="com.ivan.mfutu.mapper.ResultMapper.SubBasicQotResultMap">
+        select code, market, name, cur_price, last_close_price, increase_rate, update_time from sub_basic_qot where market = #{market} order by update_time desc
+    </select>
+
     <insert id="insert">
         insert into sub_basic_qot(code,market,name,cur_price,last_close_price,increase_rate,update_time)
         values(#{code},#{market},#{name},#{curPrice},#{lastClosePrice},#{increaseRate},NOW())

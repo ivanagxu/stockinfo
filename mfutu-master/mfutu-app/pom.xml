@@ -64,6 +64,12 @@
 			<artifactId>futu-api</artifactId>
 			<version>9.6.5608</version>
 		</dependency>
+		<!-- Fastjson for JSON parsing -->
+		<dependency>
+			<groupId>com.alibaba</groupId>
+			<artifactId>fastjson</artifactId>
+			<version>1.2.83</version>
+		</dependency>
 	</dependencies>
 
 	 <build>

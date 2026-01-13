@@ -23,5 +23,6 @@ public interface FutuService {
 
 	// SubBasicQot operations
 	List<SubBasicQot> listSubBasicQotAll();
+	List<SubBasicQot> listSubBasicQotByMarket(int market);
 	void upsertSubBasicQot(SubBasicQot data);
 }
