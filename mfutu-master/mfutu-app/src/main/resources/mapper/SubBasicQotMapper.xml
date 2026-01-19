@@ -7,11 +7,16 @@
     </select>
 
     <select id="listAll" resultMap="com.ivan.mfutu.mapper.ResultMapper.SubBasicQotResultMap">
-        select code, market, name, cur_price, last_close_price, increase_rate, update_time from sub_basic_qot order by update_time desc
+        select code, market, name, cur_price, last_close_price, increase_rate, update_time from sub_basic_qot order by update_time asc
     </select>
 
     <select id="listByMarket" resultMap="com.ivan.mfutu.mapper.ResultMapper.SubBasicQotResultMap">
-        select code, market, name, cur_price, last_close_price, increase_rate, update_time from sub_basic_qot where market = #{market} order by update_time desc
+        select code, market, name, cur_price, last_close_price, increase_rate, update_time
+        from sub_basic_qot
+        where market = #{market}
+        order by (increase_rate &lt; 0) asc,
+                 CASE WHEN increase_rate &gt;= 0 THEN increase_rate END desc,
+                 CASE WHEN increase_rate &lt; 0 THEN increase_rate END asc
     </select>
 
     <insert id="insert">
