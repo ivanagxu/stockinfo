@@ -36,7 +36,7 @@ public class SubBasicQotController {
     	if (market == null) {
             // 根据当前时间决定market：白天查港股（market=1），夜间查美股（market=2）
             LocalTime now = LocalTime.now();
-            if (now.isAfter(LocalTime.of(9, 0)) && now.isBefore(LocalTime.of(17, 0))) {
+            if (now.isAfter(LocalTime.of(9, 0)) && now.isBefore(LocalTime.of(21, 0))) {
                 market = 1; // 港股
             } else {
                 market = 2; // 美股
