@@ -120,14 +120,14 @@ public class MyFutuUtil implements FTSPI_Qot, FTSPI_Trd, FTSPI_Conn {
 		if (existingSubs != null && !existingSubs.isEmpty()) {
 			List<Security> secList = new ArrayList<Security >();
 			for (SubBasicQot sb : existingSubs) {
-				if(sb.getMarket() != 2)
-					continue; //Only HK Market is supported
-				
 				subscribedCodes.put(sb.getCode(), sb.getMarket());
-				secList.add(QotCommon.Security.newBuilder().setCode(sb.getCode())
-						.setMarket(sb.getMarket())
-						.build());
-
+				
+				if(sb.getMarket() == 1) {  //Only HK market need to subscribe in FUTU
+					secList.add(QotCommon.Security.newBuilder().setCode(sb.getCode())
+							.setMarket(sb.getMarket())
+							.build());
+				}
+				
 				if(secList.size() >= max_sub_basic_qot_num)
 					break;
 			}

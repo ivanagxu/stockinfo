@@ -1,7 +1,7 @@
 package com.ivan.mfutu.service.impl;
 
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.TimeZone;
@@ -9,17 +9,17 @@ import java.util.TimeZone;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
-import org.springframework.scheduling.annotation.Scheduled;
 
 import com.futu.openapi.FTAPI;
 import com.ivan.mfutu.entity.Category;
 import com.ivan.mfutu.entity.FutuData;
+import com.ivan.mfutu.entity.SubBasicQot;
 import com.ivan.mfutu.mapper.CategoryMapper;
 import com.ivan.mfutu.mapper.FutuDataMapper;
 import com.ivan.mfutu.mapper.SubBasicQotMapper;
-import com.ivan.mfutu.entity.SubBasicQot;
 import com.ivan.mfutu.service.FutuService;
 import com.ivan.mfutu.util.MyFutuUtil;
 import com.ivan.mfutu.util.MyTwelvedataUtil;
@@ -191,17 +191,23 @@ public class FutuServiceImpl implements FutuService, InitializingBean {
 		if (subs == null || subs.isEmpty()) {
 			return;
 		}
-		for (SubBasicQot sb : subs) {
-			try {
-				if (sb != null && sb.getCode() != null) {
-					if(sb.getMarket() == 1) {
-						futuUtil.getBasicQot(sb.getMarket(), sb.getCode());
-					} 
-					Thread.sleep(50);
+		Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("Asia/Shanghai"));
+		if(cal.get(Calendar.HOUR_OF_DAY ) >= 9 && cal.get(Calendar.HOUR_OF_DAY) <= 16)  //Only update when market is opened
+		{
+			System.out.println("港股行情獲取任務啟動");
+			for (SubBasicQot sb : subs) {
+				try {
+					if (sb != null && sb.getCode() != null) {
+						if(sb.getMarket() == 1) {
+							futuUtil.getBasicQot(sb.getMarket(), sb.getCode());
+						} 
+						Thread.sleep(50);
+					}
+				} catch (Throwable t) {
+					t.printStackTrace();
 				}
-			} catch (Throwable t) {
-				t.printStackTrace();
 			}
+			System.out.println("港股行情獲取任務結束");
 		}
 	}
 	
@@ -216,16 +222,20 @@ public class FutuServiceImpl implements FutuService, InitializingBean {
 		if (subs == null || subs.isEmpty()) {
 			return;
 		}
-		for (SubBasicQot sb : subs) {
-			try {
-				if (sb != null && sb.getCode() != null) {
-					if(sb.getMarket() == 2) {
-						twelveDataUtil.getBasicQot(sb.getMarket(), sb.getCode());
+		Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("Asia/Shanghai"));
+		if(cal.get(Calendar.HOUR_OF_DAY ) >= 21 || cal.get(Calendar.HOUR_OF_DAY) <= 5)  //Only update when market is opened
+		{
+			for (SubBasicQot sb : subs) {
+				try {
+					if (sb != null && sb.getCode() != null) {
+						if(sb.getMarket() == 2) {
+							twelveDataUtil.getBasicQot(sb.getMarket(), sb.getCode());
+						}
+						Thread.sleep(50);
 					}
-					Thread.sleep(50);
+				} catch (Throwable t) {
+					t.printStackTrace();
 				}
-			} catch (Throwable t) {
-				t.printStackTrace();
 			}
 		}
 	}
