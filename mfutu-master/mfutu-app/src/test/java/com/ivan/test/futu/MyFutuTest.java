@@ -47,7 +47,7 @@ public class MyFutuTest {
 
 	@Test
 	public void testSyncFutuData() throws InterruptedException {
-		futuService.syncFutuData(FutuService.MARKET_US);
+		futuService.syncFutuData(2);
 		try {
 			Thread.sleep(5000L);
 		} catch (InterruptedException exc) {
@@ -82,7 +82,7 @@ public class MyFutuTest {
 
 	@Test
 	public void testSyncAll() {
-		futuService.syncFutuData(FutuService.MARKET_US);
+		futuService.syncFutuData(2);
 		try {
 			Thread.sleep(5000L);
 		} catch (InterruptedException exc) {

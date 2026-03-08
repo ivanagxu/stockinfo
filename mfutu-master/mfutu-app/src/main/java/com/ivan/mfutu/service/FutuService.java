@@ -7,10 +7,6 @@ import com.ivan.mfutu.entity.FutuData;
 import com.ivan.mfutu.entity.SubBasicQot;
 
 public interface FutuService {
-	public static final int MARKET_US = 1;
-	public static final int MARKET_HK = 2;
-	public static final int MARKET_CN = 3;
-	
 	List<FutuData> listFutuDataByDate(String date);
 	void importFutuData(List<FutuData> futuDatas, String plDate);
 	void importCategory(List<Category> categories);

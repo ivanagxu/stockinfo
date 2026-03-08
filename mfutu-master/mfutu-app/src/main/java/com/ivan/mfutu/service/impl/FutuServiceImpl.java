@@ -61,7 +61,7 @@ public class FutuServiceImpl implements FutuService, InitializingBean {
 	@Override
 	public void syncFutuData(int market) {
 		// Database update will process in asynchronize mode
-		if (FutuService.MARKET_US == market) {
+		if (2 == market) {
 			futuUtil.syncUSFutuData();
 		} else {
 			System.out.println("Unknow market code, please check FutuService.MARKET_XX options");

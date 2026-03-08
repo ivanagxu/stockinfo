@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.futu.openapi.FTAPI;
@@ -78,6 +79,12 @@ public class MyFutuUtil implements FTSPI_Qot, FTSPI_Trd, FTSPI_Conn {
     protected HashMap<Integer, ReqInfo> trdReqInfoMap = new HashMap<>();
     protected HashMap<String, Integer> subscribedCodes = new HashMap<>();
 	
+	// 连接参数，用于断线重连
+	private String apiHost;
+	private int apiPort;
+	private volatile boolean reconnecting = false;
+	private static final int RECONNECT_INTERVAL_MS = 5000; // 重连间隔 5 秒
+
 	static TrdCommon.TrdHeader makeTrdHeader(TrdCommon.TrdEnv trdEnv, long accID, TrdCommon.TrdMarket trdMarket) {
 		TrdCommon.TrdHeader header = TrdCommon.TrdHeader.newBuilder().setTrdEnv(trdEnv.getNumber()).setAccID(accID)
 				.setTrdMarket(trdMarket.getNumber()).build();
@@ -102,17 +109,61 @@ public class MyFutuUtil implements FTSPI_Qot, FTSPI_Trd, FTSPI_Conn {
 	}
 
 	public void start(String apiHost, int apiPort) {
+		this.apiHost = apiHost;
+		this.apiPort = apiPort;
 		qot.initConnect(apiHost, apiPort, false);
 		trd.initConnect(apiHost, apiPort, false);
 	}
 
 	public void onInitConnect(FTAPI_Conn client, long errCode, String desc) {
 		System.out.printf("Qot onInitConnect: ret=%d desc=%s connID=%d\n", errCode, desc, client.getConnectID());
-		if (errCode != 0) // 连接失败
+		if (errCode != 0) { // 连接失败
+			System.out.println("连接失败，将在 onDisconnect 中触发重连");
 			return;
-		
-		//初始化订阅
-		//initSubscribe();
+		}
+
+		// 连接成功，停止重连循环
+		reconnecting = false;
+		System.out.println("Futu OpenD 连接成功");
+
+		// 连接成功后重新订阅股票行情
+		resubscribeAll();
+	}
+
+	/**
+	 * 重新订阅所有股票行情（断线重连后调用）
+	 */
+	private void resubscribeAll() {
+		if (subscribedCodes.isEmpty()) {
+			return;
+		}
+		System.out.println("重新订阅股票行情...");
+		List<Security> secList = new ArrayList<>();
+		for (Map.Entry<String, Integer> entry : subscribedCodes.entrySet()) {
+			if (entry.getValue() == 1) { // 只订阅港股
+				secList.add(QotCommon.Security.newBuilder()
+						.setCode(entry.getKey())
+						.setMarket(entry.getValue())
+						.build());
+			}
+			if (secList.size() >= max_sub_basic_qot_num) {
+				break;
+			}
+		}
+		if (!secList.isEmpty()) {
+			QotSub.C2S c2s = QotSub.C2S.newBuilder()
+					.addAllSecurityList(secList)
+					.addSubTypeList(QotCommon.SubType.SubType_RT_VALUE)
+					.addSubTypeList(QotCommon.SubType.SubType_KL_Day_VALUE)
+					.addSubTypeList(QotCommon.SubType.SubType_Basic_VALUE)
+					.setIsSubOrUnSub(true)
+					.setIsRegOrUnRegPush(true)
+					.setIsFirstPush(true)
+					.build();
+			QotSub.Request req = QotSub.Request.newBuilder().setC2S(c2s).build();
+			qot.sub(req);
+			System.out.println("重新订阅完成，共 " + secList.size() + " 只股票");
+		}
 	}
 	
 	public void initSubscribe() {
@@ -131,7 +182,7 @@ public class MyFutuUtil implements FTSPI_Qot, FTSPI_Trd, FTSPI_Conn {
 				if(secList.size() >= max_sub_basic_qot_num)
 					break;
 			}
-			QotSub.C2S c2s = QotSub.C2S.newBuilder().addAllSecurityList(secList)
+			QotSub.C2S c2s = QotSub.C2S.newBuilder()
 			.addAllSecurityList(secList)
 			.addSubTypeList(QotCommon.SubType.SubType_RT_VALUE)
 			.addSubTypeList(QotCommon.SubType.SubType_KL_Day_VALUE)
@@ -147,8 +198,38 @@ public class MyFutuUtil implements FTSPI_Qot, FTSPI_Trd, FTSPI_Conn {
 
 	// 断线后会调用此回调
 	public void onDisconnect(FTAPI_Conn client, long errCode) {
-		System.out.printf("Qot onDisConnect: %d\n", errCode);
-		qot.close(); // 释放底层资源
+		System.out.printf("Qot onDisConnect: %d, 准备重连...\n", errCode);
+		qot.close();
+		trd.close();
+		tradeUnlocked = false;
+
+		// 启动重连线程
+		if (!reconnecting) {
+			reconnecting = true;
+			new Thread(() -> {
+				while (reconnecting && apiHost != null) {
+					try {
+						Thread.sleep(RECONNECT_INTERVAL_MS);
+						System.out.println("正在重连 Futu OpenD...");
+						// 重新创建连接对象
+						qot = new FTAPI_Conn_Qot();
+						trd = new FTAPI_Conn_Trd();
+						qot.setClientInfo("FTAPI4J_Sample", 1);
+						qot.setConnSpi(MyFutuUtil.this);
+						qot.setQotSpi(MyFutuUtil.this);
+						trd.setClientInfo("FTAPI4J_Trade_Sample", 1);
+						trd.setConnSpi(MyFutuUtil.this);
+						trd.setTrdSpi(MyFutuUtil.this);
+						qot.initConnect(apiHost, apiPort, false);
+						trd.initConnect(apiHost, apiPort, false);
+						// 等待连接结果，onInitConnect 成功后会设置 reconnecting = false
+						Thread.sleep(3000);
+					} catch (Exception e) {
+						System.out.println("重连失败: " + e.getMessage());
+					}
+				}
+			}, "Futu-Reconnect-Thread").start();
+		}
 	}
 
 	//订阅回调
