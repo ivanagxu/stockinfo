@@ -223,7 +223,7 @@ public class FutuServiceImpl implements FutuService, InitializingBean {
 			return;
 		}
 		Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("Asia/Shanghai"));
-		if(cal.get(Calendar.HOUR_OF_DAY ) >= 21 || cal.get(Calendar.HOUR_OF_DAY) <= 5)  //Only update when market is opened
+		if(cal.get(Calendar.HOUR_OF_DAY ) >= 19 || cal.get(Calendar.HOUR_OF_DAY) <= 5)  //Only update when market is opened
 		{
 			for (SubBasicQot sb : subs) {
 				try {

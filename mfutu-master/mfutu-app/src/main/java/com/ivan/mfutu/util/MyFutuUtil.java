@@ -72,12 +72,34 @@ public class MyFutuUtil implements FTSPI_Qot, FTSPI_Trd, FTSPI_Conn {
 	public static final int max_sub_basic_qot_num = 50;
 	
 	private static boolean tradeUnlocked = false;
+	private volatile boolean trdConnected = false;
 	
 	List<FutuData> myPositionAsFutuData = new ArrayList<FutuData>();
 	
 	protected HashMap<Integer, ReqInfo> qotReqInfoMap = new HashMap<>();
     protected HashMap<Integer, ReqInfo> trdReqInfoMap = new HashMap<>();
     protected HashMap<String, Integer> subscribedCodes = new HashMap<>();
+
+	void handleTrdOnReply(int serialNo, int protoID, GeneratedMessageV3 rsp) {
+		ReqInfo reqInfo = getTrdReqInfo(serialNo, protoID);
+		if (reqInfo != null) {
+			synchronized (reqInfo.syncEvent) {
+				reqInfo.rsp = rsp;
+				reqInfo.syncEvent.notifyAll();
+			}
+		}
+	}
+
+	ReqInfo getTrdReqInfo(int serialNo, int protoID) {
+		synchronized (trdLock) {
+			ReqInfo info = trdReqInfoMap.getOrDefault(serialNo, null);
+			if (info != null && info.protoID == protoID) {
+				trdReqInfoMap.remove(serialNo);
+				return info;
+			}
+		}
+		return null;
+	}
 	
 	// 连接参数，用于断线重连
 	private String apiHost;
@@ -116,10 +138,17 @@ public class MyFutuUtil implements FTSPI_Qot, FTSPI_Trd, FTSPI_Conn {
 	}
 
 	public void onInitConnect(FTAPI_Conn client, long errCode, String desc) {
-		System.out.printf("Qot onInitConnect: ret=%d desc=%s connID=%d\n", errCode, desc, client.getConnectID());
+		String connType = (client instanceof FTAPI_Conn_Trd) ? "Trd" : "Qot";
+		System.out.printf("%s onInitConnect: ret=%d desc=%s connID=%d\n", connType, errCode, desc, client.getConnectID());
 		if (errCode != 0) { // 连接失败
 			System.out.println("连接失败，将在 onDisconnect 中触发重连");
 			return;
+		}
+
+		// Trd 连接成功
+		if (client instanceof FTAPI_Conn_Trd) {
+			trdConnected = true;
+			System.out.println("Trd 连接成功");
 		}
 
 		// 连接成功，停止重连循环
@@ -128,6 +157,57 @@ public class MyFutuUtil implements FTSPI_Qot, FTSPI_Trd, FTSPI_Conn {
 
 		// 连接成功后重新订阅股票行情
 		resubscribeAll();
+	}
+
+	public boolean waitForTrdConnection(long timeoutMs) throws InterruptedException {
+		long startTime = System.currentTimeMillis();
+		while (!trdConnected) {
+			if (System.currentTimeMillis() - startTime > timeoutMs) {
+				return false;
+			}
+			Thread.sleep(100);
+		}
+		return true;
+	}
+
+	public TrdGetPositionList.Response getPositionListSync(
+			long accID,
+			TrdCommon.TrdMarket trdMarket,
+			TrdCommon.TrdEnv trdEnv,
+			boolean isRefreshCache) throws InterruptedException {
+
+		ReqInfo reqInfo = null;
+		Object syncEvent = new Object();
+
+		synchronized (syncEvent) {
+			synchronized (trdLock) {
+				TrdCommon.TrdHeader header = TrdCommon.TrdHeader.newBuilder()
+						.setAccID(accID)
+						.setTrdEnv(trdEnv.getNumber())
+						.setTrdMarket(trdMarket.getNumber())
+						.build();
+
+				TrdGetPositionList.C2S c2s = TrdGetPositionList.C2S.newBuilder()
+						.setHeader(header)
+						.setRefreshCache(isRefreshCache)
+						.build();
+
+				TrdGetPositionList.Request req = TrdGetPositionList.Request.newBuilder()
+						.setC2S(c2s)
+						.build();
+
+				int sn = trd.getPositionList(req);
+				if (sn == 0) {
+					System.out.println("getPositionListSync: 发送请求失败");
+					return null;
+				}
+
+				reqInfo = new ReqInfo(ProtoID.TRD_GETPOSITIONLIST, syncEvent);
+				trdReqInfoMap.put(sn, reqInfo);
+			}
+			syncEvent.wait(10000);
+			return (TrdGetPositionList.Response) reqInfo.rsp;
+		}
 	}
 
 	/**
@@ -317,7 +397,8 @@ public class MyFutuUtil implements FTSPI_Qot, FTSPI_Trd, FTSPI_Conn {
     }
 	@Override
     public void onReply_GetAccList(FTAPI_Conn client, int nSerialNo, TrdGetAccList.Response rsp) {
-        System.out.printf("Reply: TrdGetAccList: %d  %s\n", nSerialNo, rsp.toString());
+		handleTrdOnReply(nSerialNo, ProtoID.TRD_GETACCLIST, rsp);
+		System.out.printf("Reply: TrdGetAccList: %d  %s\n", nSerialNo, rsp.toString());
     }
 	@Override
     public void onReply_RequestHistoryKL(FTAPI_Conn client, int nSerialNo, QotRequestHistoryKL.Response rsp) {
@@ -463,13 +544,45 @@ public class MyFutuUtil implements FTSPI_Qot, FTSPI_Trd, FTSPI_Conn {
         TrdGetAccList.Request req = TrdGetAccList.Request.newBuilder().setC2S(c2s).build();
         int seqNo = trd.getAccList(req);
         System.out.printf("Send TrdGetAccList: %d\n", seqNo);
+
+	}
+	/**
+	 * 同步获取账户列表
+	 * @return 账户列表响应，失败返回 null
+	 */
+	public TrdGetAccList.Response getAccListSync() throws InterruptedException {
+		ReqInfo reqInfo = null;
+		Object syncEvent = new Object();
+
+		synchronized (syncEvent) {
+			synchronized (trdLock) {
+				TrdGetAccList.C2S c2s = TrdGetAccList.C2S.newBuilder()
+						.setUserID(loginAccId)
+						.build();
+
+				TrdGetAccList.Request req = TrdGetAccList.Request.newBuilder()
+						.setC2S(c2s)
+						.build();
+
+				int sn = trd.getAccList(req);
+				if (sn == 0) {
+					System.out.println("getAccListSync: 发送请求失败");
+					return null;
+				}
+
+				reqInfo = new ReqInfo(ProtoID.TRD_GETACCLIST, syncEvent);
+				trdReqInfoMap.put(sn, reqInfo);
+			}
+			syncEvent.wait(10000);
+			return (TrdGetAccList.Response) reqInfo.rsp;
+		}
 	}
 	
 	public void setFutuService(FutuService service) {
 		this.futuService = service;
 	}
 	
-	public void unlockTrade() {
+	public boolean unlockTrade() {
 		if(!tradeUnlocked) {
 	        TrdUnlockTrade.C2S c2s = TrdUnlockTrade.C2S.newBuilder()
 	                .setUnlock(true)
@@ -479,7 +592,9 @@ public class MyFutuUtil implements FTSPI_Qot, FTSPI_Trd, FTSPI_Conn {
 	        TrdUnlockTrade.Request req = TrdUnlockTrade.Request.newBuilder().setC2S(c2s).build();
 	        int seqNo = trd.unlockTrade(req);
 	        System.out.printf("Send TrdUnlockTrade: %d\n", seqNo);
+		return true;
 		}
+	return false;
 	}
 	
 	public void syncUSFutuData() {

@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(sed -i '321d' \"d:/workspace/stockinfo/mfutu-master/mfutu-app/src/main/java/com/ivan/mfutu/util/MyFutuUtil.java\")",
+      "Bash(sed -n '320,324p' \"d:/workspace/stockinfo/mfutu-master/mfutu-app/src/main/java/com/ivan/mfutu/util/MyFutuUtil.java\")",
+      "Bash(sed -i '321,322d' \"d:/workspace/stockinfo/mfutu-master/mfutu-app/src/main/java/com/ivan/mfutu/util/MyFutuUtil.java\")",
+      "Bash(printf '\\\\t\\\\tSystem.out.printf\\(\"Reply: TrdGetAccList: %d  %s\\\\\\\\n\", nSerialNo, rsp.toString\\(\\)\\);\\\\n')",
+      "Bash(mvn compile:*)",
+      "Bash(sed)",
+      "Bash(mvn test:*)",
+      "Bash(find:*)",
+      "Bash(sed -i '239s/.*/\\\\t\\\\t\\\\t\\\\t\\\\t\\\\tacc.getAccID\\(\\),/' \"d:/workspace/stockinfo/mfutu-master/mfutu-app/src/test/java/com/ivan/test/futu/MyFutuTest.java\")",
+      "Bash(sed -i '240s/.*/\\\\t\\\\t\\\\t\\\\t\\\\t\\\\tacc.getAccType\\(\\).toString\\(\\)\\);/' \"d:/workspace/stockinfo/mfutu-master/mfutu-app/src/test/java/com/ivan/test/futu/MyFutuTest.java\")",
+      "Bash(sed -i '238s/.*/\\\\t\\\\t\\\\t\\\\tSystem.out.printf\\(\"账户ID: %d, 账户类型: %s\\\\\\\\n\",/' \"d:/workspace/stockinfo/mfutu-master/mfutu-app/src/test/java/com/ivan/test/futu/MyFutuTest.java\")",
+      "Bash(sed -i '140r /tmp/waitfor.txt' \"d:/workspace/stockinfo/mfutu-master/mfutu-app/src/main/java/com/ivan/mfutu/util/MyFutuUtil.java\")",
+      "Bash(sed -i '142s/.*/\\\\t\\\\tString connType = \\(client instanceof FTAPI_Conn_Trd\\) ? \"Trd\" : \"Qot\";/' \"d:/workspace/stockinfo/mfutu-master/mfutu-app/src/main/java/com/ivan/mfutu/util/MyFutuUtil.java\")",
+      "Bash(sed -i '143s/.*/\\\\t\\\\tSystem.out.printf\\(\"%s onInitConnect: ret=%d desc=%s connID=%d\\\\\\\\n\", connType, errCode, desc, client.getConnectID\\(\\)\\);/' \"d:/workspace/stockinfo/mfutu-master/mfutu-app/src/main/java/com/ivan/mfutu/util/MyFutuUtil.java\")",
+      "Bash(tee /tmp/test_output.txt)",
+      "Bash(mvn test-compile:*)",
+      "Bash(tee /tmp/us_result.txt)",
+      "Bash(tee /tmp/sim_result.txt)"
+    ]
+  }
+}
